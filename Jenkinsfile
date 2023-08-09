@@ -2,12 +2,6 @@ pipeline {
     agent any
     
     stages {
-        stage('Hello') {
-            steps {
-                echo 'Hello, Jenkins!'
-            }
-        }
-
         stage('Checkout') {
             steps {
                 // Checkout the source code from Git
@@ -17,6 +11,19 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'docker build -t gcr.io/clever-oasis-395212/website_image /var/jenkins_home/workspace/websitePipeline/wildrydes-site/'
+            }
+        }
+        
+        // stage('Deploy') {
+        //     steps {
+        //         // Use Ansible to deploy to your Kubernetes cluster
+        //         sh 'ansible-playbook deployment.yaml'  // Replace with your playbook
+        //     }
+        // }
+
+        stage('Hello') {
+            steps {
+                echo 'Hello, Jenkins!'
             }
         }
 
@@ -34,11 +41,5 @@ pipeline {
             }
         }
        
-        // stage('Deploy') {
-        //     steps {
-        //         // Use Ansible to deploy to your Kubernetes cluster
-        //         sh 'ansible-playbook deployment.yaml'  // Replace with your playbook
-        //     }
-        // }
     }
 }
