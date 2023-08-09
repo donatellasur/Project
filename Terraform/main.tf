@@ -23,79 +23,65 @@ resource "google_sql_database_instance" "my_database" {
    deletion_protection = false
 }
 
-resource "google_compute_network" "my_project_network" {
+# Define VPC Network
+resource "google_compute_network" "my_network" {
   name = "my-network"
 }
 
-resource "google_compute_subnetwork" "subnet" {
-  name          = "my-subnet"
+# Define Subnets
+resource "google_compute_subnetwork" "frontend_subnet" {
+  name          = "frontend-subnet"
   region        = "europe-west1"
-  network       = google_compute_network.my_project_network.self_link
-  ip_cidr_range = "10.0.0.0/24"
+  ip_cidr_range = "10.0.1.0/24"
+  network       = google_compute_network.my_network.self_link
 }
 
-resource "google_compute_firewall" "allow-http" {
+resource "google_compute_subnetwork" "backend_subnet" {
+  name          = "backend-subnet"
+  region        = "europe-west1"
+  ip_cidr_range = "10.0.2.0/24"
+  network       = google_compute_network.my_network.self_link
+}
+
+# Define Firewall Rules
+resource "google_compute_firewall" "allow_http" {
   name    = "allow-http"
-  network = google_compute_network.my_project_network.name
+  network = google_compute_network.my_network.self_link
 
   allow {
     protocol = "tcp"
-    ports    = ["80"]
+    ports    = ["80", "443"]
   }
 
   source_ranges = ["0.0.0.0/0"]
 }
-resource "google_compute_instance_template" "my_instance_template" {
-  name = "my-instance-template"
-  machine_type = "n1-standard-1"  # Adjust as needed
-
-  # Configure boot disk options
-  disk {
-    source_image = "projects/debian-cloud/global/images/debian-10-buster-v20230711"  # Use a valid image
-    auto_delete  = true
-  }
-
-  # Define the container spec
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  network_interface {
-    network = google_compute_network.my_project_network.id
-    subnetwork = google_compute_subnetwork.subnet.id
-  }
+# Define Google Cloud Storage bucket
+resource "google_storage_bucket" "my_bucket" {
+  name = "website2-bucket"
+  location = "europe-west1"
 }
 
-resource "google_compute_instance_group_manager" "gke_instance_group_manager" {
-  name             = "gke-instance-group-manager"
-  base_instance_name = "gke-instance"
-  zone             = "europe-west1-b"
-  target_size      = 2
-
-  version {
-    instance_template = google_compute_instance_template.my_instance_template.self_link
-  }
+# Define HTTP(S) Load Balancers
+resource "google_compute_backend_bucket" "my_backend_bucket" {
+  name        = "my-backend-bucket"
+  bucket_name = google_storage_bucket.my_bucket.name
 }
 
-resource "google_compute_global_forwarding_rule" "http-rule" {
-  name       = "http-rule"
-  target = google_compute_instance_group_manager.gke_instance_group_manager.instance_group
-  port_range = "80"
+resource "google_compute_url_map" "my_url_map" {
+  name    = "my-url-map"
+  default_service = google_compute_backend_bucket.my_backend_bucket.self_link
 }
 
-resource "google_compute_backend_service" "backend-service" {
-  name = "backend-service"
+# # Define the HTTP forwarding rule
+# resource "google_compute_global_forwarding_rule" "http_rule" {
+#   name       = "http-rule"
+#   target     = google_compute_url_map.my_url_map.self_link
+#   port_range = "80"
+# }
 
-  protocol = "HTTP"
-
-  backend {
-    group = google_compute_instance_group_manager.gke_instance_group_manager.instance_group
-  }
-
-  health_checks = [google_compute_http_health_check.health-check.self_link]
-}
-
-
-resource "google_compute_http_health_check" "health-check" {
-  name = "health-check"
-}
+# # Define the HTTPS forwarding rule
+# resource "google_compute_global_forwarding_rule" "https_rule" {
+#   name       = "https-rule"
+#   target     = google_compute_url_map.my_url_map.self_link
+#   port_range = "443"
+# }
