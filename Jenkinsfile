@@ -16,7 +16,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'docker build -t -f gcr.io/clever-oasis-395212/website_image /var/jenkins_home/workspace/websitePipeline/wildrydes-site/'
+                sh 'docker build -t gcr.io/clever-oasis-395212/website_image /var/jenkins_home/workspace/websitePipeline/wildrydes-site/'
             }
         }
 
