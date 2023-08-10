@@ -21,7 +21,7 @@ pipeline {
                  sh 'docker tag website_image gcr.io/clever-oasis-395212/website_image'
 
                 //  Push the image to GCR
-                sh 'docker push gcr.io/clever-oasis-395212/website_image'
+                // sh 'docker push gcr.io/clever-oasis-395212/website_image'
             }
         }
 
