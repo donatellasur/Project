@@ -14,12 +14,15 @@ pipeline {
             }
         }
         
-        // stage('Deploy') {
-        //     steps {
-        //         // Use Ansible to deploy to your Kubernetes cluster
-        //         sh 'ansible-playbook deployment.yaml'  // Replace with your playbook
-        //     }
-        // }
+        stage('Deploy') {
+            steps {
+                //  Tag the Docker image with GCR URL
+                 sh 'docker tag website_image gcr.io/clever-oasis-395212/website_image'
+
+                //  Push the image to GCR
+                sh 'docker push gcr.io/clever-oasis-395212/website_image'
+            }
+        }
 
         stage('Hello') {
             steps {
