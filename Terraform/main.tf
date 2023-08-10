@@ -3,6 +3,7 @@ provider "google" {
   project     = "clever-oasis-395212"
   region      = "europe-west1"
 }
+
 resource "google_container_cluster" "gke_cluster" {
   name               = "my-gke-cluster"
   location           = "europe-west1-b"
@@ -23,30 +24,20 @@ resource "google_sql_database_instance" "my_database" {
    deletion_protection = false
 }
 
-# Define VPC Network
+
 resource "google_compute_network" "my_network" {
   name = "my-network"
 }
 
-# Define Subnets
-resource "google_compute_subnetwork" "frontend_subnet" {
-  name          = "frontend-subnet"
-  region        = "europe-west1"
-  ip_cidr_range = "10.0.1.0/24"
-  network       = google_compute_network.my_network.self_link
+resource "google_compute_subnetwork" "my_subnet" {
+  name          = "my-subnet"
+  network       = google_compute_network.my_network.id
+  ip_cidr_range = "10.0.0.0/24"
 }
 
-resource "google_compute_subnetwork" "backend_subnet" {
-  name          = "backend-subnet"
-  region        = "europe-west1"
-  ip_cidr_range = "10.0.2.0/24"
-  network       = google_compute_network.my_network.self_link
-}
-
-# Define Firewall Rules
-resource "google_compute_firewall" "allow_http" {
+resource "google_compute_firewall" "allow-http" {
   name    = "allow-http"
-  network = google_compute_network.my_network.self_link
+  network = google_compute_network.my_network.name
 
   allow {
     protocol = "tcp"
@@ -55,33 +46,56 @@ resource "google_compute_firewall" "allow_http" {
 
   source_ranges = ["0.0.0.0/0"]
 }
-# Define Google Cloud Storage bucket
-resource "google_storage_bucket" "my_bucket" {
-  name = "website2-bucket"
-  location = "europe-west1"
-}
 
-# Define HTTP(S) Load Balancers
-resource "google_compute_backend_bucket" "my_backend_bucket" {
-  name        = "my-backend-bucket"
-  bucket_name = google_storage_bucket.my_bucket.name
-}
+# ---------------------------------------------------pana aici a mers----------------------------------------------------------
 
-resource "google_compute_url_map" "my_url_map" {
-  name    = "my-url-map"
-  default_service = google_compute_backend_bucket.my_backend_bucket.self_link
-}
-
-# # Define the HTTP forwarding rule
-# resource "google_compute_global_forwarding_rule" "http_rule" {
-#   name       = "http-rule"
-#   target     = google_compute_url_map.my_url_map.self_link
-#   port_range = "80"
+# resource "google_compute_backend_service" "web-backend" {
+#   name        = "web-backend"
+#   port_name   = "http"
+#   protocol    = "HTTP"
+  
+#   backend {
+#     group = google_compute_instance_group.my_group.self_link
+#   }
+  
+#   health_checks = [google_compute_http_health_check.web-health-check.self_link]
 # }
 
-# # Define the HTTPS forwarding rule
-# resource "google_compute_global_forwarding_rule" "https_rule" {
-#   name       = "https-rule"
-#   target     = google_compute_url_map.my_url_map.self_link
-#   port_range = "443"
+# resource "google_compute_http_health_check" "web-health-check" {
+#   name               = "web-health-check"
+#   request_path       = "/"
+#   port               = 80
+#   check_interval_sec = 10
+#   timeout_sec        = 5
+#   unhealthy_threshold = 2
+#   healthy_threshold   = 2
+# }
+
+# resource "google_compute_url_map" "web-map" {
+#   name = "web-map"
+  
+#   default_url_redirect {
+#     https_redirect = true
+#     strip_query = true
+#   }
+# }
+
+# resource "google_compute_ssl_certificate" "web-ssl-cert" {
+#   name        = "web-ssl-cert"
+#   certificate = filebase64("../../certificate.pfx")
+#   # the key is already included with a self-signed ssl
+#   private_key = filebase64("../../certificate.pfx")
+# }
+
+# resource "google_compute_target_https_proxy" "web-https-proxy" {
+#   name              = "web-https-proxy"
+#   ssl_certificates = [google_compute_ssl_certificate.web-ssl-cert.self_link]
+#   url_map           = google_compute_url_map.web-map.self_link
+# }
+
+# resource "google_compute_global_forwarding_rule" "web-forwarding-rule" {
+#   name        = "web-forwarding-rule"
+#   target      = google_compute_target_https_proxy.web-https-proxy.self_link
+#   port_range  = "443"
+#   description = "Web forwarding rule"
 # }
