@@ -14,13 +14,22 @@ pipeline {
             }
         }
         
-        stage('Deploy') {
+        stage('Push') {
             steps {
                 //  Tag the Docker image with GCR URL
-                 sh 'docker tag website_image gcr.io/clever-oasis-395212/website_image'
+                //  sh 'docker tag website_image gcr.io/clever-oasis-395212/website_image'
 
                 //  Push the image to GCR
                 sh 'docker push gcr.io/clever-oasis-395212/website_image'
+            }
+        }
+
+        stage('Deploy'){
+            steps{
+                //Deploy with Kubernetes
+                sh 'kubectl apply -f /var/jenkins_home/workspace/websitePipeline/Kubernetes/deployment.yaml'
+                sh 'kubectl apply -f /var/jenkins_home/workspace/websitePipeline/Kubernetes/service.yaml'
+                sh 'kubectl apply -f /var/jenkins_home/workspace/websitePipeline/Kubernetes/autoscale.yaml'
             }
         }
 
