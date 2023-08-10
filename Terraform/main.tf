@@ -1,5 +1,5 @@
 provider "google" {
-  credentials = file("../clever-oasis-395212-7b3da5dc7717.json")
+  credentials = file("../../clever-oasis-395212-7b3da5dc7717.json")
   project     = "clever-oasis-395212"
   region      = "europe-west1"
 }
