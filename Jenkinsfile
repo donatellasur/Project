@@ -18,9 +18,11 @@ pipeline {
         stage('Push') {
             steps {
                 //  Tag the Docker image with GCR URL
+                echo 'Tag!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
                  sh 'docker tag website_image gcr.io/clever-oasis-395212/website_image'
 
                 //  Push the image to GCR
+                echo 'Push!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
                 sh 'docker push gcr.io/clever-oasis-395212/website_image'
             }
         }
